@@ -1,0 +1,27 @@
+# Firebase credentials — NEVER commit
+backend/serviceAccountKey.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+backend/.env
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+
+# Render / Vercel / Netlify
+.vercel/
+.netlify/
+api/__pycache__/
+
+# Local images (not needed in repo)
+frontend/CampuStudent.jpg
