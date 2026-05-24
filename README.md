@@ -16,6 +16,14 @@ A platform for college students to **rent, borrow, and share campus essentials**
 
 ---
 
+### Why CampusMitra?
+- 💰 **Save Money** — Rent items at 50-70% lower than buying new
+- ♻️ **Reduce Waste** — Make items work harder, not the landfill
+- 🤝 **Build Community** — Connect with peers who share your lifestyle
+- ⭐ **Trust System** — Rating-based reputation keeps everyone honest
+- 🔒 **Secure** — Security deposits protect both borrowers and lenders
+
+
 ## ✨ Features
 
 ### Feature Overview
