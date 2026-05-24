@@ -36,8 +36,6 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB max request body
 
 # Allow Vercel / Netlify frontend + localhost for development
-import re as _re
-
 _allowed_origins = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
@@ -47,27 +45,17 @@ _allowed_origins = [
     'http://127.0.0.1:5173',
     'http://localhost:4173',
     'http://127.0.0.1:4173',
+    # Vercel wildcard patterns (flask-cors supports regex strings in list)
+    r'https://.*\.vercel\.app',
+    r'https://.*\.netlify\.app',
 ]
 
-# Add FRONTEND_URL from env (Vercel / Netlify production URL)
+# Add explicit FRONTEND_URL from env
 _frontend_url = os.environ.get('FRONTEND_URL', '').rstrip('/')
-if _frontend_url:
+if _frontend_url and _frontend_url not in _allowed_origins:
     _allowed_origins.append(_frontend_url)
 
-def _cors_origin_check(origin):
-    """Allow any *.vercel.app or *.netlify.app subdomain + explicit list."""
-    if not origin:
-        return False
-    if origin in _allowed_origins:
-        return True
-    # Allow all Vercel preview deployments and Netlify previews
-    if _re.match(r'https://[a-zA-Z0-9\-]+\.vercel\.app$', origin):
-        return True
-    if _re.match(r'https://[a-zA-Z0-9\-]+\.netlify\.app$', origin):
-        return True
-    return False
-
-CORS(app, origins=_cors_origin_check, supports_credentials=True)
+CORS(app, origins=_allowed_origins, supports_credentials=True)
 jwt = JWTManager(app)
 
 # ── Flask-Mail (Gmail SMTP) ───────────────────────────────────────────────────
