@@ -12,7 +12,18 @@ _cred_path    = os.environ.get('FIREBASE_CREDENTIALS', _default_path)
 
 try:
     if _cred_json:
-        cred = credentials.Certificate(json.loads(_cred_json))
+        # Render sometimes wraps the value in single quotes or escapes newlines
+        _cred_json = _cred_json.strip().strip("'").strip('"')
+        try:
+            _cred_dict = json.loads(_cred_json)
+        except json.JSONDecodeError:
+            # Try fixing escaped newlines in private_key
+            _cred_json = _cred_json.replace('\\n', '\n')
+            _cred_dict = json.loads(_cred_json)
+        # Fix private_key newlines if they came in as literal \n
+        if 'private_key' in _cred_dict:
+            _cred_dict['private_key'] = _cred_dict['private_key'].replace('\\n', '\n')
+        cred = credentials.Certificate(_cred_dict)
         logger.info('Firebase: using credentials from environment variable')
     else:
         if not os.path.exists(_cred_path):
