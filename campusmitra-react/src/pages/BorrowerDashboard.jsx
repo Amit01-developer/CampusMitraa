@@ -138,6 +138,10 @@ export default function BorrowerDashboard() {
 
   useEffect(() => {
     if (!currentUser) { navigate('/'); return; }
+    // Admin ko sirf admin dashboard dikhao
+    if (currentUser.email?.toLowerCase() === 'hacktolearn001@gmail.com') {
+      navigate('/admin'); return;
+    }
     loadOverview();
     loadBrowseItems();
     loadZones();

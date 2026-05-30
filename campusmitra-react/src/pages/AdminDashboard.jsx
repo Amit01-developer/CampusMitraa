@@ -4,6 +4,7 @@ import { useToast } from '../components/Toast';
 import { API } from '../utils/api';
 import { toggleTheme } from '../utils/theme';
 import { useScrollRestore } from '../utils/useScrollRestore';
+import { useAuth } from '../context/AuthContext';
 
 const ADMIN_EMAIL = 'hacktolearn001@gmail.com';
 
@@ -15,11 +16,19 @@ function escHtml(str) {
 export default function AdminDashboard() {
   const showToast = useToast();
   const navigate = useNavigate();
+  const { currentUser, authToken, logout: authLogout, loading: authLoading } = useAuth();
   useScrollRestore();
 
-  const [adminToken, setAdminToken] = useState(localStorage.getItem('cs_token'));
-  const [adminUser, setAdminUser] = useState(null);
-  const [loggedIn, setLoggedIn] = useState(false);
+  // If already logged in via AuthContext as admin, use that token directly
+  const [adminToken, setAdminToken] = useState(
+    authToken || localStorage.getItem('cs_token')
+  );
+  const [adminUser, setAdminUser] = useState(
+    currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? currentUser : null
+  );
+  const [loggedIn, setLoggedIn] = useState(
+    currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+  );
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -36,14 +45,30 @@ export default function AdminDashboard() {
   const [rentalFilter, setRentalFilter] = useState('all');
   const [allItems, setAllItems] = useState([]);
 
-  function authHeaders() {
-    return { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' };
+  function authHeaders(token) {
+    const t = token || adminToken || localStorage.getItem('cs_token');
+    return { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' };
   }
+
+  // ── Sync loggedIn when AuthContext finishes loading ───────────────────────
+  useEffect(() => {
+    if (authLoading) return;
+    if (currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      setAdminUser(currentUser);
+      setAdminToken(authToken || localStorage.getItem('cs_token'));
+      setLoggedIn(true);
+    }
+  }, [authLoading, currentUser]);
 
   // ── Boot: verify existing token ───────────────────────────────────────────
   useEffect(() => {
+    // Already logged in via AuthContext
+    if (loggedIn && adminToken) {
+      loadStats(adminToken);
+      return;
+    }
     if (!adminToken) return;
-    fetch(`${API}/auth/me`, { headers: authHeaders() })
+    fetch(`${API}/auth/me`, { headers: authHeaders(adminToken) })
       .then((r) => r.ok ? r.json() : null)
       .then((user) => {
         if (!user || user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
@@ -54,7 +79,7 @@ export default function AdminDashboard() {
         }
         setAdminUser(user);
         setLoggedIn(true);
-        loadStats();
+        loadStats(adminToken);
       })
       .catch(() => { localStorage.removeItem('cs_token'); setAdminToken(null); });
   }, []);
@@ -82,22 +107,24 @@ export default function AdminDashboard() {
       setAdminToken(token);
       setAdminUser(data.user);
       setLoggedIn(true);
-      loadStats();
+      loadStats(token);  // pass token directly — state update is async
     } catch { setLoginError('Login failed. Try again.'); }
     finally { setLoginLoading(false); }
   }
 
   function adminLogout() {
     localStorage.removeItem('cs_token');
+    authLogout();          // AuthContext bhi clear karo
     setAdminToken(null);
     setAdminUser(null);
     setLoggedIn(false);
+    navigate('/');
   }
 
   // ── Stats ─────────────────────────────────────────────────────────────────
-  async function loadStats() {
+  async function loadStats(token) {
     try {
-      const res = await fetch(`${API}/admin/stats`, { headers: authHeaders() });
+      const res = await fetch(`${API}/admin/stats`, { headers: authHeaders(token) });
       if (res.status === 403) { showToast('Admin access required', 'error'); return; }
       setStats(await res.json());
     } catch { showToast('Could not load stats', 'error'); }
@@ -159,6 +186,15 @@ export default function AdminDashboard() {
   const filteredRentals = rentalFilter === 'all' ? allRentals : allRentals.filter((r) => r.status === rentalFilter);
 
   // ── LOGIN GATE ────────────────────────────────────────────────────────────
+  // AuthContext still loading — show spinner, not login form
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+        <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
+      </div>
+    );
+  }
+
   if (!loggedIn) {
     return (
       <div className="admin-login-wrap">
@@ -195,19 +231,14 @@ export default function AdminDashboard() {
       <header>
         <div className="container">
           <div className="header-content">
-            <a href="/" className="logo" onClick={(e) => { e.preventDefault(); navigate('/'); }} style={{ textDecoration: 'none' }}>
+            <a href="/admin" className="logo" onClick={(e) => { e.preventDefault(); navigate('/admin'); }} style={{ textDecoration: 'none' }}>
               <i className="fas fa-handshake"></i><span>CampusMitra</span>
             </a>
-            <nav><ul>
-              <li><a href="/" onClick={(e) => { e.preventDefault(); navigate('/'); }}>Home</a></li>
-              <li><a href="/owner" onClick={(e) => { e.preventDefault(); navigate('/owner'); }}>Owner</a></li>
-              <li><a href="/borrower" onClick={(e) => { e.preventDefault(); navigate('/borrower'); }}>Borrower</a></li>
-            </ul></nav>
+            <nav><ul></ul></nav>
             <div className="auth-buttons">
               <button className="dark-toggle" onClick={toggleTheme} title="Toggle theme"><i className="fas fa-moon"></i></button>
               <span className="admin-badge"><i className="fas fa-shield-alt"></i> Admin</span>
               <span className="dash-user-name">{adminUser?.name?.split(' ')[0]}</span>
-              <button className="btn btn-outline" onClick={adminLogout}>Log Out</button>
             </div>
             <button className={`hamburger${sidebarOpen ? ' open' : ''}`} onClick={() => setSidebarOpen((o) => !o)}>
               <span></span><span></span><span></span>

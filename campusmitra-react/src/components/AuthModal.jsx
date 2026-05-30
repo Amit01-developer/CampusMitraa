@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
 import { API } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
+
+const ADMIN_EMAIL = 'hacktolearn001@gmail.com';
 
 // ── Password strength helper ──────────────────────────────────────────────────
 function getPasswordStrength(pwd) {
@@ -50,6 +53,7 @@ function PasswordInput({ value, onChange, placeholder = '•••••••�
 export default function AuthModal({ mode, onClose, onSwitchMode }) {
   const { login } = useAuth();
   const showToast = useToast();
+  const navigate = useNavigate();
   const [tab, setTab] = useState(mode);
 
   // Login fields
@@ -115,6 +119,10 @@ export default function AuthModal({ mode, onClose, onSwitchMode }) {
       login(data.token, data.user);
       showToast(`Welcome back, ${data.user.name}!`, 'success');
       onClose();
+      // Admin email se login karne pe admin dashboard pe redirect karo
+      if (data.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        navigate('/admin');
+      }
     } catch {
       showToast('Login failed', 'error');
     } finally {
@@ -164,6 +172,9 @@ export default function AuthModal({ mode, onClose, onSwitchMode }) {
           login(data.token, data.user);
           showToast(`Welcome, ${data.user.name}!`, 'success');
           onClose();
+          if (data.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            navigate('/admin');
+          }
         },
         (msg) => showToast(msg, 'error')
       );
