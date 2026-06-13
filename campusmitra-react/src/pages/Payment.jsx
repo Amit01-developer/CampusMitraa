@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { API } from '../utils/api';
+import AuthModal from '../components/AuthModal';
 
 const iconMap = { electronics: 'fa-laptop', textbooks: 'fa-book', tools: 'fa-tools', clothing: 'fa-tshirt' };
 const gradMap = {
@@ -13,7 +14,7 @@ const gradMap = {
 };
 
 export default function Payment() {
-  const { currentUser, authToken, authHeaders } = useAuth();
+  const { currentUser, authHeaders } = useAuth();
   const showToast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -49,19 +50,21 @@ export default function Payment() {
   const [declared, setDeclared] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
 
-  // Pre-fill user info
+  // If not logged in when page loads — show auth modal immediately
   useEffect(() => {
-    if (!authToken) return;
-    fetch(`${API}/auth/me`, { headers: authHeaders() })
-      .then((r) => r.ok ? r.json() : null)
-      .then((u) => {
-        if (!u) return;
-        if (u.name) setRenterName(u.name);
-        if (u.email) setRenterEmail(u.email);
-      })
-      .catch(() => {});
-  }, [authToken]);
+    if (!currentUser) setShowAuthModal(true);
+    else setShowAuthModal(false);
+  }, [currentUser]);
+
+  // Pre-fill user info from currentUser (no extra API call needed)
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.name)  setRenterName(currentUser.name);
+    if (currentUser.email) setRenterEmail(currentUser.email);
+  }, [currentUser]);
 
   // Computed total
   function calcTotal() {
@@ -99,7 +102,7 @@ export default function Payment() {
   }
 
   async function processPayment() {
-    if (!authToken) { showToast('Please log in first', 'error'); navigate('/'); return; }
+    if (!currentUser) { setAuthMode('login'); setShowAuthModal(true); return; }
     if (!declared) { showToast('Please accept the Rental Agreement first', 'error'); return; }
     if (!itemId) { showToast('No item selected. Please browse real items.', 'error'); return; }
     if (!startDate || !endDate) { showToast('Please select rental dates', 'error'); return; }
@@ -153,6 +156,18 @@ export default function Payment() {
 
   return (
     <>
+      {/* Auth modal — shown when guest lands on payment page */}
+      {showAuthModal && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => {
+            setShowAuthModal(false);
+            // If still not logged in after closing modal, go back to browse
+            if (!currentUser) navigate('/borrower');
+          }}
+          onSwitchMode={setAuthMode}
+        />
+      )}
       {/* Header */}
       <header>
         <div className="container">

@@ -4,8 +4,9 @@ import Navbar from '../components/Navbar';
 import AuthModal from '../components/AuthModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
-import { API } from '../utils/api';
+import { API, cachedFetch } from '../utils/api';
 import { useScrollRestore } from '../utils/useScrollRestore';
+import { catGradient, catIcon } from '../utils/helpers';
 
 export default function Home() {
   const { currentUser } = useAuth();
@@ -15,6 +16,18 @@ export default function Home() {
   const [heroSearch, setHeroSearch] = useState('');
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+
+  // Live items for categories section
+  const [liveItems, setLiveItems] = useState([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
+
+  // Load live items on mount — no login needed
+  useEffect(() => {
+    cachedFetch(`${API}/items`)
+      .then((data) => setLiveItems(Array.isArray(data) ? data : []))
+      .catch(() => setLiveItems([]))
+      .finally(() => setItemsLoading(false));
+  }, []);
 
   // Animate stats on scroll
   useEffect(() => {
@@ -50,8 +63,8 @@ export default function Home() {
 
   // Load live stats from API
   useEffect(() => {
-    fetch(`${API}/stats`)
-      .then((r) => r.json())
+    // Stats cache: 30 seconds (changes after rentals)
+    cachedFetch(`${API}/stats`, 30_000)
       .then((data) => {
         const els = document.querySelectorAll('.stat-item h3');
         if (els[0]) els[0].textContent = data.total_items + '+';
@@ -251,57 +264,145 @@ export default function Home() {
               { slug: 'textbooks', icon: 'fa-book', title: 'Textbooks & Study', desc: 'Rent textbooks for the semester or borrow for specific chapters', time: 'Semester/Chapter rental', grad: 'linear-gradient(135deg,#0d9488,#14b8a6)' },
               { slug: 'tools', icon: 'fa-tools', title: 'Tools & Equipment', desc: 'Lab equipment, art supplies, project tools for coursework', time: 'Project-based rental', grad: 'linear-gradient(135deg,#f59e0b,#d97706)' },
               { slug: 'clothing', icon: 'fa-tshirt', title: 'Clothing & Formal Wear', desc: 'Borrow formal attire for presentations, interviews, events', time: 'Event-based rental', grad: 'linear-gradient(135deg,#7c3aed,#8b5cf6)' },
-            ].map((c) => (
-              <div className="category-card" key={c.slug} onClick={() => showCategoryPage(c.slug)}>
-                <div className="category-icon" style={{ background: c.grad }}>
-                  <i className={`fas ${c.icon}`}></i>
-                </div>
-                <div className="category-content">
-                  <h3>{c.title}</h3>
-                  <p>{c.desc}</p>
-                  <div style={{ marginTop: 15, color: 'var(--gray)', fontSize: '0.9rem' }}>
-                    <i className="fas fa-clock"></i> {c.time}
+            ].map((c) => {
+              const count = liveItems.filter((i) => i.category_slug === c.slug && i.is_available).length;
+              return (
+                <div className="category-card" key={c.slug} onClick={() => showCategoryPage(c.slug)}
+                  style={{ cursor: 'pointer' }}>
+                  <div className="category-icon" style={{ background: c.grad }}>
+                    <i className={`fas ${c.icon}`}></i>
+                  </div>
+                  <div className="category-content">
+                    <h3>{c.title}</h3>
+                    <p>{c.desc}</p>
+                    <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                      <span style={{ color: 'var(--gray)', fontSize: '0.9rem' }}>
+                        <i className="fas fa-clock"></i> {c.time}
+                      </span>
+                      {!itemsLoading && (
+                        <span style={{
+                          background: count > 0 ? 'rgba(13,148,136,0.1)' : 'rgba(156,163,175,0.15)',
+                          color: count > 0 ? '#0d9488' : 'var(--gray)',
+                          borderRadius: 20, padding: '2px 10px',
+                          fontSize: '0.78rem', fontWeight: 700,
+                        }}>
+                          {count > 0 ? `${count} available` : 'None listed yet'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Featured Items */}
+      {/* Live Items — visible without login */}
       <section className="featured" id="items">
         <div className="container">
           <div className="section-title">
             <h2>Recently Listed Items</h2>
-            <p>Available for rent or borrow on your campus</p>
+            <p>Browse items available for rent or borrow — no sign-in needed to explore</p>
           </div>
-          <div className="items-grid">
-            {[
-              { img: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=220&fit=crop', name: 'MacBook Pro 2022', owner: 'Rahul, CS 3rd Year', price: '₹350/day', desc: 'Perfect for coding projects or video editing.' },
-              { img: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=220&fit=crop', name: 'Topper Notes', owner: 'Shivika Jain, CSE Dept', price: '₹80/per subject', desc: 'Detailed notes with highlighted concepts.' },
-              { img: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=220&fit=crop', name: 'Scientific Calculator', owner: 'Priya, Engineering', price: '₹50/week', desc: 'For engineering exams. Like new condition.' },
-            ].map((item) => (
-              <div className="item-card" key={item.name}>
-                <div className="item-img">
-                  <img src={item.img} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-                <div className="item-details">
-                  <h3>{item.name}</h3>
-                  <div className="item-meta">
-                    <span><i className="fas fa-user"></i> {item.owner}</span>
-                    <span><i className="fas fa-star" style={{ color: 'var(--accent)' }}></i> 4.8</span>
-                  </div>
-                  <div className="item-price">{item.price}</div>
-                  <p>{item.desc}</p>
-                  <div className="item-actions">
-                    <button className="btn btn-rent btn-small" onClick={() => navigate('/borrower')}>Rent Now</button>
-                    <button className="btn btn-borrow btn-small" onClick={() => navigate('/borrower')}>Borrow</button>
+
+          {itemsLoading ? (
+            /* Skeleton */
+            <div className="items-grid">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="ic-skeleton" style={{ borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden' }}>
+                  <div className="skel-img" style={{ paddingTop: '56%' }}></div>
+                  <div className="skel-body" style={{ padding: '14px 16px' }}>
+                    <div className="skel-line"></div>
+                    <div className="skel-line short"></div>
+                    <div className="skel-line xshort"></div>
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : liveItems.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--gray)' }}>
+              <i className="fas fa-box-open" style={{ fontSize: '2.5rem', opacity: 0.3, display: 'block', marginBottom: 12 }}></i>
+              <p>No items listed yet. Be the first to list one!</p>
+              <button className="btn btn-primary" style={{ marginTop: 16 }}
+                onClick={() => currentUser ? navigate('/owner') : (setAuthMode('signup'), setShowAuth(true))}>
+                <i className="fas fa-plus"></i> List an Item
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="items-grid">
+                {liveItems.slice(0, 6).map((item) => (
+                  <div className="item-card" key={item.id}>
+                    <div className="item-img" style={{ height: 180, overflow: 'hidden', position: 'relative' }}>
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{
+                          width: '100%', height: '100%', display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                          background: catGradient(item.category_slug), fontSize: '3rem', color: 'white',
+                        }}>
+                          <i className={`fas ${catIcon(item.category_slug)}`}></i>
+                        </div>
+                      )}
+                      {/* availability badge */}
+                      <span style={{
+                        position: 'absolute', top: 10, left: 10,
+                        background: item.is_available ? 'rgba(13,148,136,0.9)' : 'rgba(220,38,38,0.85)',
+                        color: '#fff', borderRadius: 20, padding: '2px 10px',
+                        fontSize: '0.72rem', fontWeight: 700,
+                      }}>
+                        {item.is_available ? '✓ Available' : 'Rented'}
+                      </span>
+                    </div>
+                    <div className="item-details">
+                      <h3 style={{ marginBottom: 6 }}>{item.name}</h3>
+                      <div className="item-meta">
+                        <span><i className="fas fa-user"></i> {item.owner?.name || '—'}</span>
+                        <span><i className="fas fa-star" style={{ color: 'var(--accent)' }}></i> 4.8</span>
+                      </div>
+                      <div className="item-price">{item.price || '—'}</div>
+                      {item.description && (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--gray)', marginBottom: 12,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="item-actions">
+                        {/* View Details — always free */}
+                        <button className="btn btn-borrow btn-small"
+                          onClick={() => navigate(`/borrower?category=${item.category_slug || ''}`)}>
+                          <i className="fas fa-eye"></i> View
+                        </button>
+                        {/* Borrow/Rent — requires login */}
+                        <button
+                          className="btn btn-rent btn-small"
+                          disabled={!item.is_available}
+                          onClick={() => {
+                            if (!currentUser) { setAuthMode('login'); setShowAuth(true); return; }
+                            navigate(`/borrower?category=${item.category_slug || ''}`);
+                          }}
+                        >
+                          <i className="fas fa-handshake"></i>
+                          {currentUser ? 'Rent Now' : 'Sign in to Rent'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+              {liveItems.length > 6 && (
+                <div style={{ textAlign: 'center', marginTop: 32 }}>
+                  <button className="btn btn-outline"
+                    onClick={() => navigate('/borrower')}>
+                    <i className="fas fa-th-large"></i> View All {liveItems.length} Items
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 

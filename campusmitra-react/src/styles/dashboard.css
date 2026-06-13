@@ -688,6 +688,38 @@ body.dark-mode .nav-active {
 
     /* Stat boxes */
     .category-stats { grid-template-columns: 1fr 1fr; }
+
+    /* ── NEW: Owner item card full-width on mobile ── */
+    .owner-item-card { max-width: 100%; }
+
+    /* ── NEW: owner-item-actions stack on mobile ── */
+    .owner-item-actions { flex-direction: column; gap: 10px; }
+    .owner-item-actions .btn-sm-teal,
+    .owner-item-actions .btn-danger { width: 100%; justify-content: center; text-align: center; }
+
+    /* ── NEW: Request-info text wrapping ── */
+    .request-info p { font-size: 0.82rem; line-height: 1.6; }
+
+    /* ── NEW: Filter bar horizontal scroll on mobile ── */
+    .p3-filter-bar { overflow-x: auto; }
+    .p3-sort-wrap { flex-wrap: wrap; }
+
+    /* ── NEW: Admin table horizontal scroll ── */
+    .admin-table-wrap { -webkit-overflow-scrolling: touch; }
+
+    /* ── NEW: Admin stats grid 2 cols ── */
+    .admin-stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .admin-stat-card { padding: 16px 14px; gap: 12px; }
+    .admin-stat-num { font-size: 1.5rem; }
+    .admin-stat-card i { font-size: 1.5rem; }
+
+    /* ── NEW: Admin header padding ── */
+    .admin-header-gradient { padding: 20px 18px; }
+    .admin-header-gradient h1 { font-size: 1.4rem; }
+
+    /* ── NEW: Profile page ── */
+    .profile-grid { grid-template-columns: 1fr !important; }
+    .profile-sidebar-col { position: static !important; }
 }
 
 /* Keep auth buttons visible on dashboard mobile */
@@ -729,6 +761,26 @@ body.dark-mode .nav-active {
 
     /* Category stats */
     .category-stats { grid-template-columns: 1fr 1fr; }
+
+    /* ── NEW: Admin stats single column on 480px ── */
+    .admin-stats-grid { grid-template-columns: 1fr 1fr; }
+
+    /* ── NEW: request-actions wrap better ── */
+    .request-actions { gap: 8px; }
+    .request-actions button { font-size: 0.82rem; padding: 8px 10px; }
+
+    /* ── NEW: sidebar profile compact ── */
+    .sidebar-profile { padding: 0 16px 18px; gap: 10px; }
+    .avatar { width: 40px; height: 40px; font-size: 1.1rem; }
+    .sidebar-name { font-size: 0.88rem; }
+
+    /* ── NEW: dash mobile menu button full width ── */
+    .dash-mobile-menu-btn { width: 100%; justify-content: center; }
+
+    /* ── NEW: admin header ── */
+    .admin-header-gradient { padding: 16px 14px; border-radius: 12px; }
+    .admin-header-gradient h1 { font-size: 1.2rem; }
+    .admin-badge { font-size: 0.75rem; padding: 5px 10px; }
 }
 
 /* ===== DARK MODE — Dashboard specific ===== */

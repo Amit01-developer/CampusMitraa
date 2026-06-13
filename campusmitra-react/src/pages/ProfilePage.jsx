@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import AuthModal from '../components/AuthModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { API } from '../utils/api';
@@ -38,6 +39,8 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [editing, setEditing]     = useState(false);
   const [editForm, setEditForm]   = useState({});
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode,      setAuthMode]      = useState('login');
 
   // Review form
   const [reviewRating,  setReviewRating]  = useState(0);
@@ -50,19 +53,21 @@ export default function ProfilePage() {
   const [refCode,      setRefCode]      = useState('');
   const [applyingRef,  setApplyingRef]  = useState(false);
 
-  const isOwnProfile = currentUser && (userId === currentUser.id || !userId);
+  const isOwnProfile = currentUser && (String(userId) === String(currentUser.id) || !userId);
   const targetId     = userId || currentUser?.id;
 
   // Wait for currentUser to load before fetching profile
   useEffect(() => {
-    // If no userId in URL and no currentUser yet, wait
-    if (!userId && !currentUser) return;
-    // If userId in URL, we can fetch immediately (public profile)
-    // If no userId, we need currentUser
-    const id = userId || currentUser?.id;
-    if (!id) { navigate('/'); return; }
-    loadProfile(id);
-    if (currentUser && (userId === currentUser.id || !userId)) loadReferral();
+    // Public profile (userId in URL) — fetch immediately, no login needed
+    if (userId) { loadProfile(userId); return; }
+    // Own profile — need currentUser
+    if (!currentUser) {
+      setLoading(false);
+      setShowAuthModal(true);
+      return;
+    }
+    loadProfile(currentUser.id);
+    loadReferral();
   }, [userId, currentUser]);
 
   async function loadProfile(id) {
@@ -129,7 +134,7 @@ export default function ProfilePage() {
       if (data.error) { showToast(data.error, 'error'); return; }
       showToast(`Review submitted! New trust score: ${data.new_trust_score}⭐`, 'success');
       setReviewRating(0); setReviewComment(''); setReviewRental('');
-      loadProfile();
+      loadProfile(targetId);
     } catch { showToast('Could not submit review', 'error'); }
     finally { setSubmittingRev(false); }
   }
@@ -165,10 +170,24 @@ export default function ProfilePage() {
     </>
   );
 
-  // Not logged in and no userId — redirect to home
+  // Not logged in and no userId — show auth modal
   if (!profile && !loading) {
-    navigate('/');
-    return null;
+    return (
+      <>
+        <Navbar />
+        {showAuthModal && (
+          <AuthModal
+            mode={authMode}
+            onClose={() => {
+              setShowAuthModal(false);
+              if (!currentUser) navigate('/borrower');
+            }}
+            onSwitchMode={setAuthMode}
+          />
+        )}
+        <div style={{ minHeight: '60vh' }} />
+      </>
+    );
   }
 
   if (!profile) return null;

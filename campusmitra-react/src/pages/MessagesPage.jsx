@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import AuthModal from '../components/AuthModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { API } from '../utils/api';
@@ -22,6 +23,8 @@ export default function MessagesPage() {
   const [sending,       setSending]       = useState(false);
   const [loadingConvs,  setLoadingConvs]  = useState(true);
   const [loadingMsgs,   setLoadingMsgs]   = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(!currentUser);
+  const [authMode,      setAuthMode]      = useState('login');
   const messagesEndRef  = useRef(null);
   const inputRef        = useRef(null);
   const activeConvRef   = useRef(null);   // stable ref for polling
@@ -35,9 +38,10 @@ export default function MessagesPage() {
   // Keep activeConvRef in sync
   useEffect(() => { activeConvRef.current = activeConv; }, [activeConv]);
 
-  // ── Redirect if not logged in ──────────────────────────────────────────────
+  // ── Show auth modal if not logged in ──────────────────────────────────────
   useEffect(() => {
-    if (!currentUser) { navigate('/'); }
+    if (!currentUser) setShowAuthModal(true);
+    else setShowAuthModal(false);
   }, [currentUser]);
 
   // ── Load conversations on mount ────────────────────────────────────────────
@@ -231,7 +235,22 @@ export default function MessagesPage() {
     setMessages([]);
   }
 
-  if (!currentUser) return null;
+  if (!currentUser) return (
+    <>
+      <Navbar />
+      {showAuthModal && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => {
+            setShowAuthModal(false);
+            if (!currentUser) navigate('/borrower');
+          }}
+          onSwitchMode={setAuthMode}
+        />
+      )}
+      <div style={{ minHeight: '60vh' }} />
+    </>
+  );
 
   const showChat   = activeConv || toUserId;
   const chatHeader = activeConv

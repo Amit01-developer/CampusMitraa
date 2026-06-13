@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import AuthModal from '../components/AuthModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { API } from '../utils/api';
@@ -8,12 +9,14 @@ import { catGradient, catIcon } from '../utils/helpers';
 import { useScrollRestore } from '../utils/useScrollRestore';
 
 export default function OwnerDashboard() {
-  const { currentUser, authHeaders, logout } = useAuth();
+  const { currentUser, authHeaders } = useAuth();
   const showToast = useToast();
   const navigate = useNavigate();
   useScrollRestore();
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
 
   // Overview state
   const [overview, setOverview] = useState({ totalItems: 0, available: 0, rented: 0, pending: 0 });
@@ -38,7 +41,10 @@ export default function OwnerDashboard() {
   const cameraInputRef = useRef();
 
   useEffect(() => {
-    if (!currentUser) { navigate('/'); return; }
+    if (!currentUser) {
+      setShowAuthModal(true);
+      return;
+    }
     // Admin ko sirf admin dashboard dikhao
     if (currentUser.email?.toLowerCase() === 'hacktolearn001@gmail.com') {
       navigate('/admin'); return;
@@ -341,7 +347,23 @@ export default function OwnerDashboard() {
     );
   }
 
-  if (!currentUser) return null;
+  if (!currentUser) return (
+    <>
+      <Navbar />
+      {showAuthModal && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => {
+            setShowAuthModal(false);
+            if (!currentUser) navigate('/borrower');
+          }}
+          onSwitchMode={setAuthMode}
+        />
+      )}
+      {/* placeholder so page isn't blank while modal is open */}
+      <div style={{ minHeight: '60vh' }} />
+    </>
+  );
 
   return (
     <>

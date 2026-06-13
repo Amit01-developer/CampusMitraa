@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import AuthModal from '../components/AuthModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
-import { API } from '../utils/api';
-import { catGradient, catIcon, track } from '../utils/helpers';
+import { API, cachedFetch, invalidateCache } from '../utils/api';
+import { catGradient, catIcon } from '../utils/helpers';
 import { useScrollRestore } from '../utils/useScrollRestore';
 
 // ── Item Card ─────────────────────────────────────────────────────────────────
@@ -106,13 +107,17 @@ function ItemCard({ item, onRequest, currentUser }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function BorrowerDashboard() {
-  const { currentUser, authHeaders, logout } = useAuth();
+  const { currentUser, authHeaders } = useAuth();
   const showToast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   useScrollRestore();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  // ── Auth modal state (shown when guest tries to borrow/rent) ─────────────
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+
+  const [activeTab, setActiveTab] = useState('browse'); // guests land on browse
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Overview
@@ -137,14 +142,20 @@ export default function BorrowerDashboard() {
   const [zones, setZones] = useState([]);
 
   useEffect(() => {
-    if (!currentUser) { navigate('/'); return; }
     // Admin ko sirf admin dashboard dikhao
-    if (currentUser.email?.toLowerCase() === 'hacktolearn001@gmail.com') {
+    if (currentUser?.email?.toLowerCase() === 'hacktolearn001@gmail.com') {
       navigate('/admin'); return;
     }
-    loadOverview();
+    // Items + zones load karo — login required nahi
     loadBrowseItems();
     loadZones();
+    // Overview + rentals sirf logged-in users ke liye
+    if (currentUser) {
+      loadOverview();
+      // URL se category/search param pick karo
+    }
+    // Default tab: logged-in → overview, guest → browse
+    setActiveTab(currentUser ? 'overview' : 'browse');
   }, [currentUser]);
 
   // ── Overview ────────────────────────────────────────────────────────────
@@ -166,8 +177,9 @@ export default function BorrowerDashboard() {
   async function loadBrowseItems() {
     setBrowseLoading(true);
     try {
-      const res = await fetch(`${API}/items`);
-      setAllItems(await res.json());
+      // Cache items for 60 s — refreshes when user explicitly reloads or creates a rental
+      const data = await cachedFetch(`${API}/items`);
+      setAllItems(data);
     } catch {
       setAllItems([]);
       showToast('Could not load items', 'error');
@@ -176,8 +188,8 @@ export default function BorrowerDashboard() {
 
   async function loadZones() {
     try {
-      const res  = await fetch(`${API}/zones`);
-      const data = await res.json();
+      // Zones change rarely — cache for 5 minutes
+      const data = await cachedFetch(`${API}/zones`, 5 * 60_000);
       if (Array.isArray(data)) setZones(data);
     } catch { /* silent */ }
   }
@@ -205,16 +217,7 @@ export default function BorrowerDashboard() {
 
   // ── Request rental ───────────────────────────────────────────────────────
   async function handleRequest(itemId, type) {
-    if (!currentUser) { showToast('Please log in first', 'error'); navigate('/'); return; }
-    if (type === 'message') {
-      try {
-        const res  = await fetch(`${API}/items/${itemId}`);
-        const item = await res.json();
-        if (item.error) { showToast(item.error, 'error'); return; }
-        navigate(`/messages?to=${item.owner?.id}&item_name=${encodeURIComponent(item.name)}`);
-      } catch { showToast('Could not load item details', 'error'); }
-      return;
-    }
+    // 'detail' is public — no login needed
     if (type === 'detail') {
       try {
         const res = await fetch(`${API}/items/${itemId}`);
@@ -232,6 +235,24 @@ export default function BorrowerDashboard() {
       } catch { showToast('Could not load item details', 'error'); }
       return;
     }
+
+    // borrow / rent / message — login required
+    if (!currentUser) {
+      setAuthMode('login');
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (type === 'message') {
+      try {
+        const res  = await fetch(`${API}/items/${itemId}`);
+        const item = await res.json();
+        if (item.error) { showToast(item.error, 'error'); return; }
+        navigate(`/messages?to=${item.owner?.id}&item_name=${encodeURIComponent(item.name)}`);
+      } catch { showToast('Could not load item details', 'error'); }
+      return;
+    }
+
     try {
       const res = await fetch(`${API}/items/${itemId}`);
       const item = await res.json();
@@ -269,6 +290,12 @@ export default function BorrowerDashboard() {
   }
 
   function switchTab(tab) {
+    // my-rentals and overview need login
+    if (!currentUser && (tab === 'my-rentals' || tab === 'overview')) {
+      setAuthMode('login');
+      setShowAuthModal(true);
+      return;
+    }
     setActiveTab(tab);
     setSidebarOpen(false);
     if (tab === 'my-rentals') loadMyRentals();
@@ -331,13 +358,21 @@ export default function BorrowerDashboard() {
     );
   }
 
-  if (!currentUser) return null;
-
   const filteredItems = getFilteredItems();
 
   return (
     <>
       <Navbar />
+
+      {/* Auth modal — shown when guest tries to borrow/rent/message */}
+      {showAuthModal && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => setShowAuthModal(false)}
+          onSwitchMode={setAuthMode}
+        />
+      )}
+
       <div className="dash-layout">
         {/* Sidebar backdrop */}
         {sidebarOpen && (
@@ -346,11 +381,32 @@ export default function BorrowerDashboard() {
         {/* Sidebar */}
         <aside className={`dash-sidebar${sidebarOpen ? ' open' : ''}`}>
           <div className="sidebar-profile">
-            <div className="avatar">{currentUser.name?.[0]?.toUpperCase()}</div>
-            <div>
-              <div className="sidebar-name">{currentUser.name}</div>
-              <div className="sidebar-role">Borrower</div>
-            </div>
+            {currentUser ? (
+              <>
+                <div className="avatar">{currentUser.name?.[0]?.toUpperCase()}</div>
+                <div>
+                  <div className="sidebar-name">{currentUser.name}</div>
+                  <div className="sidebar-role">Borrower</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="avatar" style={{ background: 'linear-gradient(135deg,#94a3b8,#64748b)' }}>
+                  <i className="fas fa-user" style={{ fontSize: '1rem' }}></i>
+                </div>
+                <div>
+                  <div className="sidebar-name">Guest</div>
+                  <div className="sidebar-role">
+                    <button
+                      onClick={() => { setAuthMode('login'); setShowAuthModal(true); setSidebarOpen(false); }}
+                      style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
+                    >
+                      Sign in →
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
             {/* Close button — mobile only */}
             <button
               className="sidebar-close-btn"
@@ -361,24 +417,41 @@ export default function BorrowerDashboard() {
             </button>
           </div>
           <nav className="sidebar-nav">
-            {[
-              { tab: 'overview', icon: 'fa-chart-pie', label: 'Overview' },
-              { tab: 'browse', icon: 'fa-search', label: 'Browse Items' },
-              { tab: 'my-rentals', icon: 'fa-receipt', label: 'My Rentals', badge: ovStats.active + ovStats.pending },
-            ].map(({ tab, icon, label, badge }) => (
-              <a key={tab} href="#"
-                className={`sidebar-link${activeTab === tab ? ' active' : ''}`}
-                onClick={(e) => { e.preventDefault(); switchTab(tab); }}>
-                <i className={`fas ${icon}`}></i> {label}
-                {badge > 0 && <span className="badge">{badge}</span>}
+            {/* Browse is always visible */}
+            <a href="#"
+              className={`sidebar-link${activeTab === 'browse' ? ' active' : ''}`}
+              onClick={(e) => { e.preventDefault(); switchTab('browse'); }}>
+              <i className="fas fa-search"></i> Browse Items
+            </a>
+            {/* These tabs need login */}
+            {currentUser ? (
+              <>
+                <a href="#"
+                  className={`sidebar-link${activeTab === 'overview' ? ' active' : ''}`}
+                  onClick={(e) => { e.preventDefault(); switchTab('overview'); }}>
+                  <i className="fas fa-chart-pie"></i> Overview
+                </a>
+                <a href="#"
+                  className={`sidebar-link${activeTab === 'my-rentals' ? ' active' : ''}`}
+                  onClick={(e) => { e.preventDefault(); switchTab('my-rentals'); }}>
+                  <i className="fas fa-receipt"></i> My Rentals
+                  {(ovStats.active + ovStats.pending) > 0 && (
+                    <span className="badge">{ovStats.active + ovStats.pending}</span>
+                  )}
+                </a>
+                <a href="/messages" className="sidebar-link" onClick={(e) => { e.preventDefault(); navigate('/messages'); }}>
+                  <i className="fas fa-comments"></i> Messages
+                </a>
+                <a href="/profile" className="sidebar-link" onClick={(e) => { e.preventDefault(); navigate('/profile'); }}>
+                  <i className="fas fa-user-circle"></i> My Profile
+                </a>
+              </>
+            ) : (
+              <a href="#" className="sidebar-link"
+                onClick={(e) => { e.preventDefault(); setAuthMode('login'); setShowAuthModal(true); setSidebarOpen(false); }}>
+                <i className="fas fa-sign-in-alt"></i> Sign In
               </a>
-            ))}
-            <a href="/messages" className="sidebar-link" onClick={(e) => { e.preventDefault(); navigate('/messages'); }}>
-              <i className="fas fa-comments"></i> Messages
-            </a>
-            <a href="/profile" className="sidebar-link" onClick={(e) => { e.preventDefault(); navigate('/profile'); }}>
-              <i className="fas fa-user-circle"></i> My Profile
-            </a>
+            )}
           </nav>
         </aside>
 
@@ -392,8 +465,8 @@ export default function BorrowerDashboard() {
             <i className="fas fa-bars"></i> Menu
           </button>
 
-          {/* OVERVIEW */}
-          {activeTab === 'overview' && (
+          {/* OVERVIEW — login required */}
+          {activeTab === 'overview' && currentUser && (
             <div className="tab-content active">
               <div className="dash-header">
                 <h1>Welcome back, {currentUser.name?.split(' ')[0]} 👋</h1>
@@ -534,7 +607,7 @@ export default function BorrowerDashboard() {
           )}
 
           {/* MY RENTALS */}
-          {activeTab === 'my-rentals' && (
+          {activeTab === 'my-rentals' && currentUser && (
             <div className="tab-content active">
               <div className="dash-header">
                 <h1>My Rentals</h1>
