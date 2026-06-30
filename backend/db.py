@@ -12,6 +12,17 @@ _cred_path    = os.environ.get('FIREBASE_CREDENTIALS', _default_path)
 
 firebase_error = None
 
+
+def _resolve_credential_path(path):
+    if os.path.isabs(path) or os.path.exists(path):
+        return path
+
+    backend_relative_path = os.path.join(os.path.dirname(__file__), path)
+    if os.path.exists(backend_relative_path):
+        return backend_relative_path
+
+    return path
+
 try:
     if _cred_json:
         # Render sometimes wraps the value in single quotes or escapes newlines
@@ -28,6 +39,7 @@ try:
         cred = credentials.Certificate(_cred_dict)
         logger.info('Firebase: using credentials from environment variable')
     else:
+        _cred_path = _resolve_credential_path(_cred_path)
         if not os.path.exists(_cred_path):
             raise FileNotFoundError(f'Service account key not found at: {_cred_path}')
         cred = credentials.Certificate(_cred_path)
