@@ -10,6 +10,8 @@ _cred_json    = os.environ.get('FIREBASE_CREDENTIALS_JSON')
 _default_path = os.path.join(os.path.dirname(__file__), 'serviceAccountKey.json')
 _cred_path    = os.environ.get('FIREBASE_CREDENTIALS', _default_path)
 
+firebase_error = None
+
 try:
     if _cred_json:
         # Render sometimes wraps the value in single quotes or escapes newlines
@@ -31,13 +33,14 @@ try:
         cred = credentials.Certificate(_cred_path)
         logger.info('Firebase: using credentials from file %s', _cred_path)
 
-    firebase_admin.initialize_app(cred, {
-        'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'campus-share-2f42b.appspot.com')
-    })
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred, {
+            'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', 'campus-share-2f42b.appspot.com')
+        })
     logger.info('Firebase Admin SDK initialised successfully')
+    firestore_db = firestore.client()
 
 except Exception as e:
-    logger.critical('Failed to initialise Firebase: %s', e)
-    raise
-
-firestore_db = firestore.client()
+    firebase_error = str(e)
+    firestore_db = None
+    logger.error('Failed to initialise Firebase: %s', e)

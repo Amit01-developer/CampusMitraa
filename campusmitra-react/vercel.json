@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://campusmitra-backend.onrender.com/api/:path*"
+      "destination": "https://campusmitraa.onrender.com/api/:path*"
     }
   ]
 }

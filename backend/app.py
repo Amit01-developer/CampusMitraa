@@ -4,7 +4,7 @@ from flask_jwt_extended import JWTManager, create_access_token
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from auth import login_required, get_current_user
-from db import firestore_db as fdb
+from db import firebase_error, firestore_db as fdb
 from datetime import datetime, timedelta
 from google.cloud.firestore_v1 import FieldFilter
 import firebase_admin
@@ -57,6 +57,15 @@ if _frontend_url and _frontend_url not in _allowed_origins:
 
 CORS(app, origins=_allowed_origins, supports_credentials=True)
 jwt = JWTManager(app)
+
+
+@app.route('/', methods=['GET'])
+def root():
+    return jsonify({
+        'service': 'CampusMitra API',
+        'status': 'ok',
+        'health': '/api/health',
+    }), 200
 
 # ── Flask-Mail (Gmail SMTP) ───────────────────────────────────────────────────
 _mail_user = os.environ.get('MAIL_USERNAME', '').strip()
@@ -1977,7 +1986,10 @@ def admin_get_items():
 # ── Health check (used by Render / uptime monitors) ───────────────────────────
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'ok'}), 200
+    payload = {'status': 'ok', 'firebase': 'connected' if fdb is not None else 'not_configured'}
+    if firebase_error:
+        payload['firebase_error'] = firebase_error
+    return jsonify(payload), 200
 
 
 # ══════════════════════════════════════════════════════════════════════════════
