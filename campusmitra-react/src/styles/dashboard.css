@@ -966,9 +966,6 @@ body.dark-mode .img-remove-btn {
     background: #3b0a0a;
     color: #f87171;
 }
-/ *   t e s t   * / 
- 
- 
 
 /* ===== PART 2: ITEM CARD ===== */
 
@@ -2472,4 +2469,272 @@ body.dark-mode .rented-chip { background: #451a03; color: #fcd34d; }
     .admin-stat-num { font-size: 1.2rem; }
     .admin-stat-card i { font-size: 1.2rem; }
     .admin-stat-label { font-size: 0.72rem; }
+}
+
+/* ===== RESPONSIVE HARDENING ===== */
+.dash-main,
+.tab-content,
+.form-card,
+.list-form-card,
+.item-card-v2,
+.owner-item-card,
+.browse-card,
+.request-card,
+.admin-rental-card,
+.messages-page,
+.messages-layout,
+.messages-sidebar,
+.messages-chat {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .dash-layout {
+        display: block;
+        min-height: auto;
+    }
+
+    .dash-main {
+        width: 100%;
+    }
+
+    .overview-cards,
+    .admin-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .items-owner-grid,
+    .browse-grid,
+    .browse-grid-v2,
+    .rentals-content {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .form-card {
+        max-width: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .dash-sidebar {
+        width: min(84vw, 300px);
+        min-width: 0;
+        top: 58px;
+        height: calc(100vh - 58px);
+    }
+
+    .dash-sidebar.open::before {
+        left: min(84vw, 300px);
+    }
+
+    .dash-main {
+        padding: 18px 14px 28px;
+    }
+
+    .dash-header {
+        margin-bottom: 18px;
+    }
+
+    .dash-header h1,
+    .admin-header-gradient h1 {
+        font-size: 1.35rem;
+        line-height: 1.25;
+    }
+
+    .overview-cards,
+    .admin-stats-grid {
+        gap: 10px;
+    }
+
+    .ov-card,
+    .admin-stat-card {
+        min-width: 0;
+        align-items: flex-start;
+    }
+
+    .owner-item-meta,
+    .rental-card-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .browse-filters,
+    .p3-filter-actions,
+    .p3-sort-wrap {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .search-bar-dash,
+    .browse-filters select,
+    .p3-search-wrap,
+    .p3-filter-select,
+    .p3-clear-btn {
+        width: 100%;
+    }
+
+    .p3-filter-bar {
+        padding: 14px;
+        overflow: visible;
+    }
+
+    .p3-filter-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .p3-filter-group,
+    .p3-price-range {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .p3-price-range > div {
+        width: 100%;
+    }
+
+    .p3-price-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .ic-actions,
+    .owner-item-actions,
+    .request-actions,
+    .rental-card-actions {
+        width: 100%;
+    }
+
+    .ic-actions button,
+    .owner-item-actions button,
+    .request-actions button,
+    .rental-card-actions button {
+        min-height: 38px;
+    }
+
+    .detail-modal {
+        width: 100%;
+    }
+
+    .messages-page {
+        padding: 16px 12px !important;
+    }
+
+    .messages-layout {
+        height: calc(100vh - 142px) !important;
+        min-height: 440px !important;
+    }
+
+    .messages-layout.has-chat {
+        grid-template-columns: 1fr !important;
+    }
+
+    .messages-layout.has-chat .messages-sidebar {
+        display: none !important;
+    }
+
+    .messages-chat {
+        border-radius: 12px !important;
+    }
+
+    .message-bubble {
+        max-width: 86% !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .dash-main {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .overview-cards,
+    .admin-stats-grid,
+    .items-owner-grid,
+    .browse-grid,
+    .browse-grid-v2,
+    .rentals-content,
+    .category-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .ov-card,
+    .admin-stat-card {
+        padding: 16px 14px;
+    }
+
+    .form-card,
+    .list-form-card {
+        padding: 18px 14px;
+        border-radius: 14px;
+    }
+
+    .request-card,
+    .admin-rental-card,
+    .rental-card {
+        padding: 15px;
+    }
+
+    .request-actions,
+    .owner-item-actions,
+    .rental-card-actions {
+        flex-direction: column;
+    }
+
+    .request-actions button,
+    .owner-item-actions button,
+    .owner-item-actions .btn-sm-teal,
+    .owner-item-actions .btn-danger,
+    .rental-card-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .p3-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .multi-img-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-table {
+        min-width: 640px;
+    }
+
+    .messages-layout {
+        height: calc(100vh - 132px) !important;
+        min-height: 390px !important;
+        gap: 10px !important;
+    }
+
+    .message-bubble {
+        max-width: 92% !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .dash-main {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .dash-header h1,
+    .admin-header-gradient h1 {
+        font-size: 1.2rem;
+    }
+
+    .ic-title,
+    .owner-item-body h3,
+    .request-info h4 {
+        overflow-wrap: anywhere;
+    }
+
+    .admin-header-gradient,
+    .list-form-card,
+    .form-card {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
 }

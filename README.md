@@ -7,7 +7,7 @@
 ![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Netlify](https://img.shields.io/badge/Netlify-Deployed-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-Backend-46E3B7?style=for-the-badge&logo=render&logoColor=black)
 
 A platform for college students to **rent, borrow, and share campus essentials** — reducing expenses, minimizing waste, and building a trusted campus community.
@@ -24,8 +24,14 @@ A platform for college students to **rent, borrow, and share campus essentials**
 |----------|---------|--------|
 | 🔐 Auth | Email/Password + Google Sign-In | ✅ |
 | 🔐 Auth | JWT tokens (7-day expiry) | ✅ |
+| 👀 Browse | Guest browsing — no login required | ✅ |
 | 📦 Items | List, edit, delete items with photo | ✅ |
+| 📦 Items | Camera / gallery photo upload | ✅ |
 | 📦 Items | Category + condition + price filters | ✅ |
+| 📦 Items | Sort by price, name, newest | ✅ |
+| 📦 Items | Save / wishlist items (localStorage) | ✅ |
+| 📦 Items | Draft save & restore for Add Item form | ✅ |
+| 📦 Items | Category-wise deposit amount suggestions | ✅ |
 | 📍 Items | Campus Zone filter | ✅ |
 | 🤝 Rentals | Borrow & Rent requests | ✅ |
 | 🤝 Rentals | Owner approve / reject / return | ✅ |
@@ -42,15 +48,24 @@ A platform for college students to **rent, borrow, and share campus essentials**
 | 🎁 Referral | Unique code + ₹50 credit for both users | ✅ |
 | 📧 Email | Rental confirmation + approval emails | ✅ |
 | 🤖 Chatbot | AI assistant (Gemini + rule-based fallback) | ✅ |
+| ⚡ Perf | API response caching (60s TTL) | ✅ |
+| ⚡ Perf | Lazy-loaded pages (code splitting) | ✅ |
 | 🌙 UI | Dark mode with correct CSS variables | ✅ |
 | 📱 UI | Fully responsive (mobile sidebar) | ✅ |
 | 🛡️ Admin | User approve/suspend + platform stats | ✅ |
+| 🛡️ Admin | All items view in admin panel | ✅ |
+
+---
 
 ### Core Platform
-- **Browse & Search** — filter items by category, condition, price range, availability, and campus zone
-- **Borrow & Rent** — every item card has Borrow, Rent, and Message Owner buttons
+- **Browse & Search** — filter items by category, condition, price range, availability, and campus zone. Guests can browse without logging in.
+- **Borrow & Rent** — every item card has Borrow, Message Owner, and Details buttons
+- **Save / Wishlist** — heart icon on item cards saves items locally (no login required)
+- **Sort** — sort browse results by price (asc/desc), name A–Z, or newest first
 - **Campus Zone Filter** — filter items by hostel block / campus area
-- **Owner Dashboard** — list items with photo upload, manage availability, accept/reject rental requests, forfeit/refund security deposits
+- **Owner Dashboard** — list items with photo upload (gallery or camera), manage availability, accept/reject rental requests, forfeit/refund security deposits
+- **Draft Save/Restore** — Add Item form auto-saves a draft to localStorage; restore with one click
+- **Deposit Suggestions** — when a category is selected, the form auto-suggests a sensible security deposit range (e.g. ₹1,000–₹5,000 for Electronics)
 - **Borrower Dashboard** — browse all items, track active and past rentals, cancel requests
 - **Payment / Checkout Page** — rental confirmation with date picker, cost calculator, deposit summary
 
@@ -58,7 +73,7 @@ A platform for college students to **rent, borrow, and share campus essentials**
 - **JWT Auth** — email/password signup + Google Sign-In via Firebase
 - **Rate Limiting** — per-IP request throttling on all auth and write endpoints
 - **Firestore Transactions** — race-condition-safe rental creation
-- **Admin Panel** — approve/suspend users, view all rentals and platform stats
+- **Admin Panel** — approve/suspend users, view all rentals, view all items, and platform stats
 
 ### In-App Messaging
 - **Borrower ↔ Owner Chat** — real-time messaging linked to rental items
@@ -80,7 +95,7 @@ A platform for college students to **rent, borrow, and share campus essentials**
 - **Review History** — all reviews visible on the user's profile page
 
 ### Profile Page
-- **Public Profile** — name, department, year, campus zone, bio, trust score
+- **Public Profile** — name, department, year, campus zone, bio, trust score (viewable without login)
 - **Stats Overview** — completed rentals, cancelled rentals, items listed, average rating
 - **Tabs** — Overview, Reviews, Items Listed, Referral (own profile only)
 - **Edit Profile** — update name, department, year, campus zone, bio inline
@@ -102,6 +117,10 @@ A platform for college students to **rent, borrow, and share campus essentials**
 - **Rule-based Fallback** — works without a Gemini API key using built-in responses
 - **Gemini Integration** — optional Gemini 2.5 Flash for richer conversational responses
 
+### Performance
+- **API Cache Layer** — public GET endpoints (`/api/items`, `/api/categories`, `/api/zones`) are cached in-memory on the frontend for 60 seconds. Cache is invalidated after mutations (create rental, etc.).
+- **Lazy-loaded Pages** — every page (`Home`, `OwnerDashboard`, `BorrowerDashboard`, etc.) is loaded as a separate JS chunk via React `lazy()` + `Suspense`. Reduces initial bundle size.
+
 ### UI / UX
 - **Dark Mode** — full dark theme with correct CSS variables across all components
 - **Responsive** — mobile sidebar, hamburger nav, single-column layouts on small screens
@@ -114,14 +133,14 @@ A platform for college students to **rent, borrow, and share campus essentials**
 
 | Layer     | Technology                                                        |
 |-----------|-------------------------------------------------------------------|
-| Frontend  | React 18, React Router v6, Vite                                   |
+| Frontend  | React 18, React Router v6, Vite 5                                 |
 | Styling   | Plain CSS with CSS variables (dark/light mode)                    |
 | Backend   | Python 3, Flask, Flask-JWT-Extended, Flask-CORS, Flask-Mail       |
 | Database  | Firebase Firestore                                                |
 | Auth      | Firebase Auth (Google Sign-In) + JWT (email/password)             |
 | AI        | Google Gemini 2.5 Flash (optional) + rule-based fallback          |
 | Email     | Gmail SMTP via Flask-Mail                                         |
-| Hosting   | Render (backend) + Netlify (frontend)                             |
+| Hosting   | Render (backend) + Vercel (frontend)                              |
 
 ---
 
@@ -130,8 +149,11 @@ A platform for college students to **rent, borrow, and share campus essentials**
 ```
 CampusMitra/
 ├── campusmitra-react/          # React frontend (Vite)
+│   ├── index.html              # Entry HTML (Inter font, Font Awesome)
+│   ├── vercel.json             # Vercel rewrite: /api/* → Render backend
+│   ├── vite.config.js          # Dev proxy /api → localhost:5000
 │   ├── src/
-│   │   ├── App.jsx             # Routes
+│   │   ├── App.jsx             # Routes + lazy page loading + Suspense
 │   │   ├── main.jsx            # Entry point
 │   │   ├── components/
 │   │   │   ├── Navbar.jsx      # Top nav with notification bell + message badge
@@ -143,22 +165,21 @@ CampusMitra/
 │   │   │   └── AuthContext.jsx # Auth state + return reminder trigger on login
 │   │   ├── pages/
 │   │   │   ├── Home.jsx        # Landing page
-│   │   │   ├── OwnerDashboard.jsx    # Owner: list items, manage requests
-│   │   │   ├── BorrowerDashboard.jsx # Borrower: browse, filter, track rentals
+│   │   │   ├── OwnerDashboard.jsx    # Owner: list items (camera/gallery), manage requests, deposit
+│   │   │   ├── BorrowerDashboard.jsx # Borrower: browse (guest ok), filter, sort, save, track rentals
 │   │   │   ├── MessagesPage.jsx      # Real-time chat with auto-refresh
-│   │   │   ├── ProfilePage.jsx       # Profile, reviews, referral
+│   │   │   ├── ProfilePage.jsx       # Profile, reviews, referral (public)
 │   │   │   ├── Payment.jsx           # Rental checkout
-│   │   │   └── AdminDashboard.jsx    # Admin panel
+│   │   │   └── AdminDashboard.jsx    # Admin panel (users, rentals, items, stats)
 │   │   ├── styles/
 │   │   │   ├── style.css       # Global styles + dark mode variables
 │   │   │   └── dashboard.css   # Dashboard & item card styles
 │   │   └── utils/
-│   │       ├── api.js          # API base URL
+│   │       ├── api.js          # API base URL + cachedFetch + invalidateCache
 │   │       ├── firebaseAuth.js # Google Sign-In
 │   │       ├── helpers.js      # Category icons/gradients
 │   │       ├── theme.js        # Dark mode toggle
 │   │       └── useScrollRestore.js
-│   ├── vite.config.js          # Dev proxy → Flask backend
 │   └── package.json
 └── backend/
     ├── app.py                  # Flask API — all routes
@@ -265,7 +286,7 @@ Frontend starts at `http://localhost:3000`. Vite proxies all `/api` requests to 
 |--------|-------------------|------|----------------------------------------------------------------|
 | GET    | `/api/items`      | —    | List items (filter: category, condition, available, min/max price) |
 | GET    | `/api/items/<id>` | —    | Get single item                                                |
-| POST   | `/api/items`      | ✅   | Create new listing                                             |
+| POST   | `/api/items`      | ✅   | Create new listing (supports base64 image upload)              |
 | PUT    | `/api/items/<id>` | ✅   | Update your listing                                            |
 | DELETE | `/api/items/<id>` | ✅   | Delete your listing                                            |
 
@@ -298,10 +319,11 @@ Frontend starts at `http://localhost:3000`. Vite proxies all `/api` requests to 
 
 ### Notifications
 
-| Method | Endpoint                    | Auth | Description                        |
-|--------|-----------------------------|------|------------------------------------|
-| GET    | `/api/notifications`        | ✅   | Get notifications (latest 30)      |
-| PUT    | `/api/notifications/read`   | ✅   | Mark all notifications as read     |
+| Method | Endpoint                              | Auth | Description                        |
+|--------|-----------------------------------------|------|------------------------------------|
+| GET    | `/api/notifications`                  | ✅   | Get notifications (latest 30)      |
+| PUT    | `/api/notifications/read`             | ✅   | Mark all notifications as read     |
+| POST   | `/api/notifications/rental-event`     | ✅   | Internal: trigger rental notifications |
 
 ### Profile & Reviews
 
@@ -335,6 +357,7 @@ Frontend starts at `http://localhost:3000`. Vite proxies all `/api` requests to 
 | GET    | `/api/admin/users`                | Admin | List all users                 |
 | PUT    | `/api/admin/users/<id>/approve`   | Admin | Approve or suspend a user      |
 | GET    | `/api/admin/rentals`              | Admin | List all rentals               |
+| GET    | `/api/admin/items`                | Admin | List all items on the platform |
 
 ### Misc
 
@@ -361,7 +384,7 @@ flowchart TD
     %% ─── OWNER FLOW ───────────────────────────────────────
     E -- I want to LEND --> F[Owner Dashboard]
 
-    F --> F1[Add New Item\nName · Category · Price · Photo · Zone]
+    F --> F1[Add New Item\nName · Category · Price · Photo · Zone\nAuto deposit suggestion · Draft save]
     F1 --> F2[Item goes LIVE\non Borrower Browse]
 
     F2 --> F3{Rental Request\nReceived?}
@@ -379,7 +402,8 @@ flowchart TD
     %% ─── BORROWER FLOW ────────────────────────────────────
     E -- I want to BORROW --> G[Borrower Dashboard]
 
-    G --> G1[Browse Items\nSearch · Filter · Campus Zone]
+    G --> G1[Browse Items\nSearch · Filter · Sort · Campus Zone\nGuest access — no login needed]
+    G1 --> G1a[💾 Save / Wishlist Items]
     G1 --> G2[View Item Details\nPrice · Condition · Owner · Reviews]
     G2 --> G3{Action}
 
@@ -400,13 +424,13 @@ flowchart TD
     %% ─── SHARED FEATURES ──────────────────────────────────
     D --> H[🔔 Notification Bell\nPolls every 30s]
     D --> I[💬 Messages\nAuto-refresh every 5s]
-    D --> J[👤 Profile Page\nTrust Score · History · Reviews]
+    D --> J[👤 Profile Page\nTrust Score · History · Reviews\nPublic — viewable without login]
     D --> K[🎁 Referral System\nShare Code → ₹50 Credit Each]
     D --> L[🤖 AI Chatbot\nAsk anything about platform]
 
     %% ─── ADMIN FLOW ───────────────────────────────────────
     D -- Admin Login --> M[Admin Dashboard]
-    M --> M1[View All Users & Rentals]
+    M --> M1[View All Users & Rentals & Items]
     M --> M2[Approve / Suspend Users]
     M --> M3[Platform Stats & Revenue]
 
@@ -467,7 +491,9 @@ flowchart LR
     style N8 fill:#ef4444,color:#fff
 ```
 
+---
 
+## 🔄 Rental Status Flow
 
 ```
 pending → active → returned
@@ -478,7 +504,7 @@ pending → active → returned
 |-------------|----------------------------------------------------------|
 | `pending`   | Request submitted, waiting for owner approval            |
 | `active`    | Owner accepted, item is with borrower                    |
-| `returned`  | Item returned, becomes available again, deposit refunded |
+| `returned`  | Item returned, becomes available again, deposit resolved |
 | `cancelled` | Rejected by owner or cancelled by borrower               |
 
 ---
@@ -499,6 +525,8 @@ pending → active → returned
 
 ## ⚙️ Environment Variables
 
+### Backend (`backend/.env`)
+
 | Variable                    | Description                                  | Default                    |
 |-----------------------------|----------------------------------------------|----------------------------|
 | `JWT_SECRET`                | Secret key for signing JWT tokens            | `campus-mitra-secret-2026` |
@@ -510,6 +538,14 @@ pending → active → returned
 | `ADMIN_EMAIL`               | Email address with admin privileges          | `hacktolearn001@gmail.com` |
 | `GEMINI_API_KEY`            | Google Gemini API key (optional)             | —                          |
 | `FRONTEND_URL`              | Frontend URL for email links                 | —                          |
+
+### Frontend (Vercel environment variables)
+
+| Variable        | Description                                        | Example                                        |
+|-----------------|----------------------------------------------------|------------------------------------------------|
+| `VITE_API_URL`  | Full URL of the Render backend `/api` prefix       | `https://campusmitra-backend.onrender.com/api` |
+
+> In development, `VITE_API_URL` is not needed — Vite proxies `/api` → `localhost:5000` automatically via `vite.config.js`.
 
 ---
 
@@ -524,13 +560,13 @@ pending → active → returned
 
   ┌──────────────────┐        HTTPS         ┌──────────────────────┐
   │                  │  ─────────────────►  │                      │
-  │   Netlify CDN    │                      │   Render (Flask)     │
+  │   Vercel CDN     │                      │   Render (Flask)     │
   │  React + Vite    │  ◄─────────────────  │   Python Backend     │
   │                  │     JSON / REST       │                      │
   └──────────────────┘                      └──────────┬───────────┘
            │                                           │
            │  Static Assets                            │  Firebase Admin SDK
-           │  (HTML/CSS/JS)                            │
+           │  (HTML/CSS/JS chunks)                     │
            ▼                                           ▼
   ┌──────────────────┐                      ┌──────────────────────┐
   │   Browser /      │                      │  Firebase Firestore  │
@@ -554,7 +590,7 @@ User Action (React)
       ▼
  fetch('/api/...')
       │
-      ▼  [Vite proxy in dev / direct URL in prod]
+      ▼  [Vite proxy in dev / Vercel rewrite in prod]
       │
       ▼
  Flask Route  ──► login_required decorator
@@ -567,6 +603,23 @@ User Action (React)
       ▼
  JSON Response  ──► React State Update  ──► UI Re-render
 ```
+
+### Vercel Rewrite (Production)
+
+`vercel.json` rewrites all `/api/*` requests from the frontend to the Render backend:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://campusmitra-backend.onrender.com/api/:path*"
+    }
+  ]
+}
+```
+
+This means the frontend always calls `/api/...` and Vercel forwards it to Render — no CORS issues in production.
 
 ### Data Model
 
@@ -627,7 +680,7 @@ referrals/
 | `FIREBASE_CREDENTIALS_JSON` | Paste entire contents of `serviceAccountKey.json`  |
 | `JWT_SECRET`                | Any strong random string                           |
 | `GEMINI_API_KEY`            | From [Google AI Studio](https://aistudio.google.com/) |
-| `FRONTEND_URL`              | Your Netlify URL e.g. `https://campusmitra.netlify.app` |
+| `FRONTEND_URL`              | Your Vercel URL e.g. `https://campusmitra.vercel.app` |
 | `MAIL_USERNAME`             | Your Gmail address                                 |
 | `MAIL_PASSWORD`             | Your Gmail App Password                            |
 | `ADMIN_EMAIL`               | Your admin email                                   |
@@ -635,30 +688,28 @@ referrals/
 
 **Health check:** `GET /api/health` → `{"status": "ok"}`
 
-### Frontend → Netlify
+### Frontend → Vercel
 
-1. Go to [netlify.com](https://netlify.com) → Add new site → Import from Git
-2. Set **Base directory** to `campusmitra-react`
-3. Set **Build command** to `npm run build`
-4. Set **Publish directory** to `campusmitra-react/dist`
-5. Deploy
+1. Go to [vercel.com](https://vercel.com) → Add New Project → Import from Git
+2. Set **Root Directory** to `campusmitra-react`
+3. Set **Build Command** to `npm run build`
+4. Set **Output Directory** to `dist`
+5. Add environment variable:
+   - `VITE_API_URL` = `https://your-render-service.onrender.com/api`
+6. Deploy
 
-After deploying, update `campusmitra-react/src/utils/api.js` with your Render backend URL:
-
-```js
-export const API = 'https://your-render-service.onrender.com/api';
-```
+The `vercel.json` in `campusmitra-react/` handles routing so all `/api/*` calls go to Render and `/*` routes load the SPA correctly.
 
 ---
 
 ## 📦 Categories
 
-| Slug          | Name                   |
-|---------------|------------------------|
-| `electronics` | Electronics            |
-| `textbooks`   | Textbooks & Study      |
-| `tools`       | Tools & Equipment      |
-| `clothing`    | Clothing & Formal Wear |
+| Slug          | Name                   | Deposit Suggestion  |
+|---------------|------------------------|---------------------|
+| `electronics` | Electronics            | ₹1,000 – ₹5,000    |
+| `textbooks`   | Textbooks & Study      | ₹100 – ₹500        |
+| `tools`       | Tools & Equipment      | ₹500 – ₹3,000      |
+| `clothing`    | Clothing & Formal Wear | ₹200 – ₹1,000      |
 
 ---
 
@@ -672,6 +723,7 @@ export const API = 'https://your-render-service.onrender.com/api';
 - **Infinite Scroll / Pagination** — for large item catalogs
 - **React Native App** — iOS and Android with offline support
 - **Owner Analytics** — earnings, most-rented items, peak demand periods
+- **Push Notifications** — browser push / PWA support
 
 ---
 

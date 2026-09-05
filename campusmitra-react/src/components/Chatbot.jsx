@@ -90,6 +90,7 @@ export default function Chatbot() {
     <>
       {/* Toggle button */}
       <button
+        className="cm-chat-toggle"
         id="cm-chat-toggle"
         aria-label={open ? 'Close chatbot' : 'Open CampusMitra chatbot'}
         onClick={() => setOpen((o) => !o)}
@@ -114,6 +115,7 @@ export default function Chatbot() {
       {/* Chat window */}
       {open && (
         <div
+          className="cm-chat-window"
           style={{
             position: 'fixed', bottom: 100, right: 28, width: 360, maxHeight: 560,
             background: 'var(--card-bg,#fff)', border: '1px solid var(--border,#e5e7eb)',

@@ -2324,3 +2324,222 @@ body.dark-mode .booking-id span { color: #a5b4fc; }
     transition: opacity .2s;
 }
 .back-home-btn:hover { opacity: .88; }
+
+/* ===== MOBILE RESPONSIVE HARDENING ===== */
+html,
+body,
+#root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+}
+
+.btn,
+button,
+input,
+select,
+textarea {
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        min-height: 58px;
+    }
+
+    .logo {
+        font-size: 1.15rem;
+        min-width: 0;
+    }
+
+    .logo span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobile-nav {
+        max-height: calc(100vh - 58px);
+        overflow-y: auto;
+    }
+
+    .hero::before,
+    .hero::after {
+        width: 240px;
+        height: 240px;
+    }
+
+    .hero-content {
+        align-items: stretch;
+    }
+
+    .hero-text {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hero-search {
+        width: 100%;
+    }
+
+    .hero-search input {
+        min-width: 0;
+    }
+
+    .hero-search button {
+        width: 48px;
+        padding-left: 0;
+        padding-right: 0;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .hero-chips {
+        justify-content: center;
+    }
+
+    .item-card,
+    .category-card,
+    .step,
+    .ai-feature-card,
+    .pay-card {
+        border-radius: 14px;
+    }
+
+    .item-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .item-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .filter-bar {
+        align-items: stretch;
+        padding: 14px;
+    }
+
+    .filter-group,
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+    }
+
+    .rentals-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .rentals-tab {
+        flex: 0 0 auto;
+    }
+
+    .cm-chat-toggle {
+        right: 16px !important;
+        bottom: 16px !important;
+        width: 52px !important;
+        height: 52px !important;
+    }
+
+    .cm-chat-window {
+        left: 12px !important;
+        right: 12px !important;
+        bottom: 78px !important;
+        width: auto !important;
+        max-height: min(560px, calc(100vh - 104px)) !important;
+        border-radius: 16px !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .hero-search {
+        flex-direction: column;
+        overflow: visible;
+        border-radius: 12px;
+    }
+
+    .hero-search input {
+        width: 100%;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .hero-search button {
+        width: 100%;
+        border-radius: 0 0 12px 12px;
+        min-height: 44px;
+    }
+
+    .hero-trust {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .trust-dot {
+        display: none;
+    }
+
+    .cta .btn-primary,
+    .cta .btn-outline {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .success-box {
+        padding: 34px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .hero-img-frame,
+    .hero-img-frame img,
+    .hero-img-overlay {
+        border-radius: 16px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .stat-item {
+        padding: 18px 14px;
+    }
+
+    .copyright h3 {
+        font-size: 0.78rem;
+        line-height: 1.5;
+    }
+
+    .pay-card {
+        padding: 18px 14px;
+    }
+
+    .detail-row,
+    .total-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .detail-value {
+        text-align: left;
+    }
+}

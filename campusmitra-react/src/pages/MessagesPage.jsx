@@ -260,7 +260,7 @@ export default function MessagesPage() {
   return (
     <>
       <Navbar />
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
+      <div className="messages-page" style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
 
         {/* Page title */}
         <h1 style={{ margin: '0 0 20px', fontSize: '1.4rem', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -268,7 +268,7 @@ export default function MessagesPage() {
           Messages
         </h1>
 
-        <div style={{
+        <div className={`messages-layout${showChat ? ' has-chat' : ''}`} style={{
           display: 'grid',
           gridTemplateColumns: showChat ? '260px 1fr' : '1fr',
           gap: 16,
@@ -277,15 +277,13 @@ export default function MessagesPage() {
         }}>
 
           {/* ── Conversation Sidebar ── */}
-          <div style={{
+          <div className="messages-sidebar" style={{
             background: 'var(--card-bg,#fff)',
             borderRadius: 14,
             border: '1px solid var(--border)',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            // Hide sidebar on mobile when chat is open
-            ...(showChat ? { display: window.innerWidth < 640 ? 'none' : 'flex' } : {}),
           }}>
             <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '0.88rem', color: 'var(--text)' }}>
               Conversations
@@ -359,7 +357,7 @@ export default function MessagesPage() {
 
           {/* ── Chat Window ── */}
           {showChat ? (
-            <div style={{
+            <div className="messages-chat" style={{
               background: 'var(--card-bg,#fff)',
               borderRadius: 14,
               border: '1px solid var(--border)',
@@ -393,7 +391,7 @@ export default function MessagesPage() {
                 }}>
                   {chatHeader.name?.[0]?.toUpperCase() || '?'}
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>
                     {chatHeader.name}
                   </div>
@@ -436,7 +434,7 @@ export default function MessagesPage() {
                   const isMe = m.sender_id === currentUser.id;
                   return (
                     <div key={m.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                      <div style={{
+                      <div className="message-bubble" style={{
                         maxWidth: '72%', padding: '10px 14px', borderRadius: 14,
                         fontSize: '0.875rem', lineHeight: 1.5, wordBreak: 'break-word',
                         ...(isMe
