@@ -4,17 +4,23 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { API } from './api';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBeNeo2wYkSOc8uYU7Q8WfxLL6hGiGucnA',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: 'campus-share-2f42b.firebaseapp.com',
   projectId: 'campus-share-2f42b',
 };
 
 // Avoid re-initializing on hot reload
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+const auth = firebaseConfig.apiKey
+  ? getAuth(getApps().length ? getApps()[0] : initializeApp(firebaseConfig))
+  : null;
+const provider = auth ? new GoogleAuthProvider() : null;
 
 export async function signInWithGoogle(onSuccess, onError) {
+  if (!auth || !provider) {
+    onError('Google sign-in is not configured. Please contact the administrator.');
+    return;
+  }
+
   try {
     const result = await signInWithPopup(auth, provider);
     const idToken = await result.user.getIdToken();
